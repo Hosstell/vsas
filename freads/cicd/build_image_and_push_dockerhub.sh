@@ -1,6 +1,5 @@
 set -e
 
-docker login -u $DOCKER_HUB_LOGIN -p $DOCKER_HUB_PASSWORD
 docker build -t freads .
 
 echo "Deploying latest version"
