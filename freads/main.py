@@ -1,8 +1,10 @@
+import json
 from collections import Counter
 
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import os
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-f", "--filename", type=str, required=True, help="Input .sam file")
@@ -34,11 +36,16 @@ def get_reads_info(filename, count_nucleotide_in_start):
     return res_
 
 
+def get_reads_info_debug():
+    devdata = json.loads(open("devdata.json", "r").read())
+    return {int(k): v for k, v in devdata.items()}
+
+
 def save_graph(read_info, filename):
     for k in read_info.keys():
         read_info[k] = {n: read_info[k][n]/sum(read_info[k].values())*100 for n in dict(read_info[k]).keys()}
 
-    res = [(k, v) for k, v in read_info.items()]
+    res = [(int(k), v) for k, v in read_info.items()]
     res = [x for x in res if 13 <= x[0] <= 30]
     res.sort()
     lens_names = [x for x, _ in res]
@@ -47,21 +54,30 @@ def save_graph(read_info, filename):
 
     fig, ax = plt.subplots()
     bottom = np.zeros(len(lens_names))
-    width = 0.6
+    width = 0.9
 
     for nuk in nuk_names:
         values = [dict(read_info[l]).get(nuk, 0) for l in lens_names]
-        p = ax.bar(list(map(str, lens_names)), values, width, label=nuk, bottom=bottom)
+        p = ax.bar(
+            list(map(str, lens_names)),
+            values,
+            width,
+            label=nuk,
+            bottom=bottom
+        )
         bottom += values
-        ax.bar_label(p, color=colors[nuk])
-        # ax.bar_label(p, label_type='center')
+        ax.bar_label(p, fmt='%.1f', label_type='center', size=7)
 
     ax.legend(bbox_to_anchor=(1, 1.02), loc="upper left")
+    ax.set_title(f'{FILENAME} (-c {COUNT_NUCLEOTIDE_IN_START})')
 
     plt.subplots_adjust(right=0.87)
     plt.savefig(filename)
 
 
 if __name__ == '__main__':
-    reads_info = get_reads_info(FILENAME, COUNT_NUCLEOTIDE_IN_START)
-    save_graph(reads_info, f'{FILENAME}.png')
+    if os.getenv('DEV'):
+        reads_info = get_reads_info_debug()
+    else:
+        reads_info = get_reads_info(FILENAME, COUNT_NUCLEOTIDE_IN_START)
+    save_graph(reads_info, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.png')

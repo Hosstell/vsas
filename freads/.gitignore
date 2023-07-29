@@ -1,2 +1,7 @@
 *.sam
 *.png
+
+Lib
+Scripts
+Include
+pyvenv.cfg
