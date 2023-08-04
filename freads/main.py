@@ -81,6 +81,11 @@ def save_graph(reads_info, graph_name):
     res = [(int(k), v) for k, v in reads_info.items()]
     res = [x for x in res if 18 <= x[0] <= 30]
     res.sort()
+
+    file = open(f"{graph_name}.json", 'w')
+    file.write(json.dumps(res))
+    file.close()
+
     lens_names = [x for x, _ in res]
     nuk_names = ['A', 'C', 'G', 'T']
 
