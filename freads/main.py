@@ -115,8 +115,16 @@ def save_graph(reads_info, graph_name):
 if __name__ == '__main__':
     f5, f3, r5, r3 = get_read_info(FILENAME)
 
-    b5 = {i: f5[i] + r5[i] for i in range(18, 31)}
-    b3 = {i: f3[i] + r3[i] for i in range(18, 31)}
+    b5 = {}
+    b3 = {}
+    for i in range(18, 31):
+        f = f5.get(i, Counter())
+        r = r5.get(i, Counter())
+        b5[i] = f + r
+
+        f = f3.get(i, Counter())
+        r = r3.get(i, Counter())
+        b3[i] = f + r
 
     save_graph(f5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.5f')
     save_graph(f3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.3f')
