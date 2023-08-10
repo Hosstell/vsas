@@ -1,13 +1,22 @@
-import json
+import argparse
+import os
+import sys
 from collections import Counter
-from typing import List, Tuple, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse
-import os
 
-from progress_bar import progress
+
+def progress(count, total, suffix=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s  %s\r' % (bar, percents, '%', suffix))
+    sys.stdout.flush()  # As suggested by Rom Ruben
+
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-f", "--filename", type=str, required=True, help="Input .sam file")

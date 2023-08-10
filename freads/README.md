@@ -1,9 +1,9 @@
 Расчет количества определенных нуклеотидов в начале ридов
 Источник: https://hub.docker.com/r/vsas/freads
-Новая версия: **1.5.0**
+Новая версия: **1.5.1**
 
 Команда запуска:  
-```docker run --rm -v "$(pwd):/in" vsas/freads -f ./miRNA_S7872Nr2.1.fastq.gz.sam -c 3```
+``` docker run --rm -v "$(pwd):/in" vsas/freads -f ./miRNA_S7872Nr2.1.fastq.gz.sam -c 3 ```
 
 -f - .sam файл
 -с - количество первых нуклеотидов к риде, которые мы учитываем в результате. [Не обязательный. Значение по умолчанию - 1]
@@ -15,4 +15,4 @@
 - miRNA_S7872Nr2.1.fastq.gz.sam.c3.16.3.png (3 последних нуклеотида для последовательностей с флагом 16 в sam-файле)
 
 **Чтобы обновить локальный образ:** 
-```docker pull vsas/freads:latest```
+``` docker pull vsas/freads:latest ```
