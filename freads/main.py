@@ -7,6 +7,8 @@ import numpy as np
 import argparse
 import os
 
+from progress_bar import progress
+
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-f", "--filename", type=str, required=True, help="Input .sam file")
 argParser.add_argument("-c", "--count", type=int, default=1, help="Сount nucleotides in start of a read")
@@ -14,27 +16,27 @@ args = argParser.parse_args()
 
 COUNT_NUCLEOTIDE_IN_START = args.count
 FILENAME = args.filename
-
-def get_complementarity(seq: str) -> str:
-    seq = seq.lower()
-    replaces = {
-        't': 'A',
-        'a': 'T',
-        'g': 'C',
-        'c': 'G'
-    }
-    for i, j in replaces.items():
-        seq = seq.replace(i, j)
-    return seq
+FILE_SIZE = os.stat(FILENAME).st_size
 
 def get_read_info(filename):
-    f5 = {}
-    f3 = {}
-    r5 = {}
-    r3 = {}
+    _0_5 = {}
+    _0_3 = {}
+    _16_5 = {}
+    _16_3 = {}
+
+    progress_step = 0
+    all_steps = 300
+    step = 0
 
     with open(filename, 'r') as file:
         for line in file:
+
+            progress_step += len(line)
+            if progress_step > FILE_SIZE / all_steps:
+                step += progress_step // (FILE_SIZE / all_steps)
+                progress_step = progress_step % (FILE_SIZE / all_steps)
+                progress(step, all_steps, FILENAME)
+
             if line[0] == '@':
                 continue
 
@@ -45,34 +47,36 @@ def get_read_info(filename):
             l = len(seq)
 
             if line.split('	')[1] == '0':
-                if l in f5:
-                    f5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                if l in _0_5:
+                    _0_5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
-                    f5[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                    _0_5[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
 
-                seq = get_complementarity(seq[::-1])
-                if l in r3:
-                    r3[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                seq = seq[::-1]
+                if l in _0_3:
+                    _0_3[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
-                    r3[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                    _0_3[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
 
                 continue
 
             if line.split('	')[1] == '16':
-                if l in f3:
-                    f3[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                if l in _16_5:
+                    _16_5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
-                    f3[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                    _16_5[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
 
-                seq = get_complementarity(seq[::-1])
-                if l in r5:
-                    r5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                seq = seq[::-1]
+                if l in _16_3:
+                    _16_3[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
-                    r5[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
+                    _16_3[l] = Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
 
                 continue
 
-    return f5, f3, r5, r3
+        progress(all_steps, all_steps, FILENAME)
+
+    return _0_5, _0_3, _16_5, _16_3
 
 def save_graph(reads_info, graph_name):
     for k in reads_info.keys():
@@ -113,22 +117,9 @@ def save_graph(reads_info, graph_name):
 
 
 if __name__ == '__main__':
-    f5, f3, r5, r3 = get_read_info(FILENAME)
+    _0_5, _0_3, _16_5, _16_3 = get_read_info(FILENAME)
 
-    b5 = {}
-    b3 = {}
-    for i in range(18, 31):
-        f = f5.get(i, Counter())
-        r = r5.get(i, Counter())
-        b5[i] = f + r
-
-        f = f3.get(i, Counter())
-        r = r3.get(i, Counter())
-        b3[i] = f + r
-
-    save_graph(f5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.5f')
-    save_graph(f3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.3f')
-    save_graph(r5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.5r')
-    save_graph(r3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.3r')
-    save_graph(b5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.5b')
-    save_graph(b3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.3b')
+    save_graph(_0_5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.0.5')
+    save_graph(_0_3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.0.3')
+    save_graph(_16_5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.16.5')
+    save_graph(_16_3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.16.3')
