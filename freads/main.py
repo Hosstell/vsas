@@ -18,23 +18,40 @@ def progress(count, total, suffix=''):
     sys.stdout.flush()  # As suggested by Rom Ruben
 
 
+
 argParser = argparse.ArgumentParser()
-argParser.add_argument("-f", "--filename", type=str, required=True, help="Input .sam file")
+argParser.add_argument("-f", "--filenames", type=str, required=True, help="Input .sam files. Example: miRNA_S7872Nr2.1.fastq.gz.sam,miRNA_S7872Nr3.1.fastq.gz,miRNA_S7872Nr4.1.fastq.gz")
 argParser.add_argument("-c", "--count", type=int, default=1, help="Сount nucleotides in start of a read")
+argParser.add_argument("-o", "--output", type=str, help="Prefix output files")
 args = argParser.parse_args()
 
 COUNT_NUCLEOTIDE_IN_START = args.count
-FILENAME = args.filename
-FILE_SIZE = os.stat(FILENAME).st_size
+FILENAMES = args.filenames
+OUTPUT = args.output
+
+
+def get_complementarity(seq: str) -> str:
+    seq = seq.lower()
+    replaces = {
+        't': 'A',
+        'a': 'T',
+        'g': 'C',
+        'c': 'G'
+    }
+    for i, j in replaces.items():
+        seq = seq.replace(i, j)
+    return seq
 
 def get_read_info(filename):
+    FILE_SIZE = os.stat(filename).st_size
+
     _0_5 = {}
     _0_3 = {}
     _16_5 = {}
     _16_3 = {}
 
     progress_step = 0
-    all_steps = 300
+    all_steps = 302
     step = 0
 
     with open(filename, 'r') as file:
@@ -44,7 +61,7 @@ def get_read_info(filename):
             if progress_step > FILE_SIZE / all_steps:
                 step += progress_step // (FILE_SIZE / all_steps)
                 progress_step = progress_step % (FILE_SIZE / all_steps)
-                progress(step, all_steps, FILENAME)
+                progress(step, all_steps, filename)
 
             if line[0] == '@':
                 continue
@@ -70,6 +87,8 @@ def get_read_info(filename):
                 continue
 
             if line.split('	')[1] == '16':
+                seq = get_complementarity(seq[::-1])
+
                 if l in _16_5:
                     _16_5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
@@ -83,7 +102,7 @@ def get_read_info(filename):
 
                 continue
 
-        progress(all_steps, all_steps, FILENAME)
+        progress(all_steps, all_steps, filename)
 
     return _0_5, _0_3, _16_5, _16_3
 
@@ -122,9 +141,39 @@ def save_graph(reads_info, graph_name):
 
 
 if __name__ == '__main__':
-    _0_5, _0_3, _16_5, _16_3 = get_read_info(FILENAME)
+    filenames = FILENAMES.split(',')
+    if not OUTPUT and len(filenames) > 1:
+        raise Exception(
+            "При обработке нескольких файлов нужно указать префикс названий выходных файлов. "
+            "Укажите через параметр -o. "
+            "Пример: -o someprefix"
+        )
 
-    save_graph(_0_5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.0.5')
-    save_graph(_0_3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.0.3')
-    save_graph(_16_5, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.16.5')
-    save_graph(_16_3, f'{FILENAME}.c{COUNT_NUCLEOTIDE_IN_START}.16.3')
+    if not OUTPUT and len(filenames) == 1:
+        OUTPUT = filenames[0]
+
+    _0_5, _0_3, _16_5, _16_3 = {}, {}, {}, {}
+    for filename in filenames:
+        _0_5r, _0_3r, _16_5r, _16_3r = get_read_info(filename)
+
+        for i in range(18, 31):
+            _ = _0_5.get(i, Counter())
+            _r = _0_5r.get(i, Counter())
+            _0_5[i] = _ + _r
+
+            _ = _0_3.get(i, Counter())
+            _r = _0_3r.get(i, Counter())
+            _0_3[i] = _ + _r
+
+            _ = _16_5.get(i, Counter())
+            _r = _16_5r.get(i, Counter())
+            _16_5[i] = _ + _r
+
+            _ = _16_5.get(i, Counter())
+            _r = _16_5r.get(i, Counter())
+            _16_5[i] = _ + _r
+
+    save_graph(_0_5, f'{OUTPUT}.c{COUNT_NUCLEOTIDE_IN_START}.0.5')
+    save_graph(_0_3, f'{OUTPUT}.c{COUNT_NUCLEOTIDE_IN_START}.0.3')
+    save_graph(_16_5, f'{OUTPUT}.c{COUNT_NUCLEOTIDE_IN_START}.16.5')
+    save_graph(_16_3, f'{OUTPUT}.c{COUNT_NUCLEOTIDE_IN_START}.16.3')
