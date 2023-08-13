@@ -32,7 +32,6 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_LOGIN }}
         password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-    -
-      name: Build and pushing new docker image to docker hub
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+    - name: Build and pushing new docker image to docker hub
       run: ./build_and_push.sh
