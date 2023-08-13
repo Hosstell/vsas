@@ -18,7 +18,7 @@
 
 **--- Изменение ---**  
 **Параметр -o**  
-Команда:   
+Команда: 
 ``` 
 docker run --rm -v "$(pwd):/in" vsas/freads -f ./miRNA_S7872Nr2.1.fastq.gz.sam 
 ```  
