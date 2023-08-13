@@ -4,7 +4,7 @@ cd ./freads
 
 VERSION=$(cat version.txt)
 docker manifest inspect vsas/freads:$VERSION > /dev/null
-if $?; then
+if [ $? -eq 0 ]; then
   exit 0
 fi
 
