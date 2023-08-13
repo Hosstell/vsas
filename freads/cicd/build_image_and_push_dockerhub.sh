@@ -1,5 +1,3 @@
-set -e
-
 cd ./freads
 
 VERSION=$(cat version.txt)
@@ -8,17 +6,17 @@ if [ $? -eq 0 ]; then
   exit 0
 fi
 
+set -e
+
 docker build -t freads .
 
 echo "Deploying latest version"
 docker image tag freads vsas/freads:latest
 docker image push vsas/freads:latest
 
-
 echo "Deploying ${VERSION} version"
 docker image tag freads vsas/freads:${VERSION}
 docker image push vsas/freads:${VERSION}
-
 
 echo "Sending notification"
 cd ..
