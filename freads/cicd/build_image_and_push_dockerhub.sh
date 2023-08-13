@@ -10,11 +10,11 @@ set -e
 
 docker build -t freads .
 
-echo "Deploying latest version"
+echo "Deploying latest version of freads"
 docker image tag freads vsas/freads:latest
 docker image push vsas/freads:latest
 
-echo "Deploying ${VERSION} version"
+echo "Deploying ${VERSION} version of freads"
 docker image tag freads vsas/freads:${VERSION}
 docker image push vsas/freads:${VERSION}
 
