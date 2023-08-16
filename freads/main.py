@@ -1,7 +1,8 @@
 import argparse
 import os
+import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,11 +24,13 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-f", "--filenames", type=str, required=True, help="Input .sam files. Example: miRNA_S7872Nr2.1.fastq.gz.sam,miRNA_S7872Nr3.1.fastq.gz,miRNA_S7872Nr4.1.fastq.gz")
 argParser.add_argument("-c", "--count", type=int, default=1, help="Сount nucleotides in start of a read")
 argParser.add_argument("-o", "--output", type=str, help="Prefix output files")
+argParser.add_argument("-nf", "--no-filter", action='store_true', help="Filtering by mathcing")
 args = argParser.parse_args()
 
 COUNT_NUCLEOTIDE_IN_START = args.count
 FILENAMES = args.filenames
 OUTPUT = args.output
+FILTER_BY_MATCHING=not args.no_filter
 
 
 def get_complementarity(seq: str) -> str:
@@ -49,6 +52,8 @@ def get_read_info(filename):
     _0_3 = {}
     _16_5 = {}
     _16_3 = {}
+    _0_ls = defaultdict(int)
+    _16_ls = defaultdict(int)
 
     progress_step = 0
     all_steps = 302
@@ -69,10 +74,15 @@ def get_read_info(filename):
             if line.split('	')[2] == '*':
                 continue
 
+            if FILTER_BY_MATCHING and not re.match('\d+M$', line.split('	')[5]):
+                continue
+
             seq = line.split('	')[9]
             l = len(seq)
 
             if line.split('	')[1] == '0':
+                _0_ls[l] += 1
+
                 if l in _0_5:
                     _0_5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
@@ -87,8 +97,9 @@ def get_read_info(filename):
                 continue
 
             if line.split('	')[1] == '16':
-                seq = get_complementarity(seq[::-1])
+                _16_ls[l] += 1
 
+                seq = get_complementarity(seq[::-1])
                 if l in _16_5:
                     _16_5[l] += Counter(seq[:COUNT_NUCLEOTIDE_IN_START])
                 else:
@@ -104,7 +115,7 @@ def get_read_info(filename):
 
         progress(all_steps, all_steps, filename)
 
-    return _0_5, _0_3, _16_5, _16_3
+    return _0_5, _0_3, _16_5, _16_3, _0_ls, _16_ls
 
 def save_graph(reads_info, graph_name):
     for k in reads_info.keys():
@@ -139,6 +150,36 @@ def save_graph(reads_info, graph_name):
     plt.subplots_adjust(right=0.87)
     plt.savefig(f'{graph_name}.png')
 
+def save_static_of_lens(reads_info, output_filename):
+    # Сохранения количества длин ридов
+    res = ""
+    for read_info in reads_info:
+        filename = read_info[0]
+        code_0 = read_info[5]
+        code_16 = read_info[6]
+
+        res += filename + '\n'
+
+        res += 'Code 0:\n'
+        for i in range(18, 31):
+            res += f"{i} - {code_0[i]}\n"
+        res += '\n'
+
+        res += 'Code 16:\n'
+        for i in range(18, 31):
+            res += f"{i} - {code_16[i]}\n"
+        res += '\n\n'
+
+    file = open(output_filename, 'w')
+    file.write(res)
+    file.close()
+
+
+def to_percents(reads_info):
+    reads_info = reads_info.copy()
+    for k in reads_info.keys():
+        reads_info[k] = {n: reads_info[k][n]/sum(reads_info[k].values())*100 for n in dict(reads_info[k]).keys()}
+    return reads_info
 
 if __name__ == '__main__':
     filenames = FILENAMES.split(',')
@@ -152,26 +193,89 @@ if __name__ == '__main__':
     if not OUTPUT and len(filenames) == 1:
         OUTPUT = filenames[0]
 
-    _0_5, _0_3, _16_5, _16_3 = {}, {}, {}, {}
-    for filename in filenames:
-        _0_5r, _0_3r, _16_5r, _16_3r = get_read_info(filename)
+    reads_info = [(filename, *get_read_info(filename)) for filename in filenames]
+    reads_info = [(
+        read_info[0],
+        to_percents(read_info[1]),
+        to_percents(read_info[2]),
+        to_percents(read_info[3]),
+        to_percents(read_info[4]),
+        read_info[5],
+        read_info[6],
+    ) for read_info in reads_info]
+    save_static_of_lens(reads_info, OUTPUT + ".readsinfo.txt")
 
-        for i in range(18, 31):
-            _ = _0_5.get(i, Counter())
-            _r = _0_5r.get(i, Counter())
-            _0_5[i] = _ + _r
+    _0_5 = {}
+    for i in range(18, 31):
+        A, T, C, G = 0,0,0,0
+        for read_info in reads_info:
+            A += read_info[1][i]['A']
+            T += read_info[1][i]['T']
+            C += read_info[1][i]['C']
+            G += read_info[1][i]['G']
+        A = A / len(read_info)
+        T = T / len(read_info)
+        C = C / len(read_info)
+        G = G / len(read_info)
+        _0_5[i] = {}
+        _0_5[i]['A'] = A
+        _0_5[i]['T'] = T
+        _0_5[i]['C'] = C
+        _0_5[i]['G'] = G
 
-            _ = _0_3.get(i, Counter())
-            _r = _0_3r.get(i, Counter())
-            _0_3[i] = _ + _r
+    _0_3 = {}
+    for i in range(18, 31):
+        A, T, C, G = 0,0,0,0
+        for read_info in reads_info:
+            A += read_info[2][i]['A']
+            T += read_info[2][i]['T']
+            C += read_info[2][i]['C']
+            G += read_info[2][i]['G']
+        A = A / len(read_info)
+        T = T / len(read_info)
+        C = C / len(read_info)
+        G = G / len(read_info)
+        _0_3[i] = {}
+        _0_3[i]['A'] = A
+        _0_3[i]['T'] = T
+        _0_3[i]['C'] = C
+        _0_3[i]['G'] = G
 
-            _ = _16_5.get(i, Counter())
-            _r = _16_5r.get(i, Counter())
-            _16_5[i] = _ + _r
+    _16_5 = {}
+    for i in range(18, 31):
+        A, T, C, G = 0,0,0,0
+        for read_info in reads_info:
+            A += read_info[3][i]['A']
+            T += read_info[3][i]['T']
+            C += read_info[3][i]['C']
+            G += read_info[3][i]['G']
+        A = A / len(read_info)
+        T = T / len(read_info)
+        C = C / len(read_info)
+        G = G / len(read_info)
+        _16_5[i] = {}
+        _16_5[i]['A'] = A
+        _16_5[i]['T'] = T
+        _16_5[i]['C'] = C
+        _16_5[i]['G'] = G
 
-            _ = _16_5.get(i, Counter())
-            _r = _16_5r.get(i, Counter())
-            _16_5[i] = _ + _r
+    _16_3 = {}
+    for i in range(18, 31):
+        A, T, C, G = 0,0,0,0
+        for read_info in reads_info:
+            A += read_info[4][i]['A']
+            T += read_info[4][i]['T']
+            C += read_info[4][i]['C']
+            G += read_info[4][i]['G']
+        A = A / len(read_info)
+        T = T / len(read_info)
+        C = C / len(read_info)
+        G = G / len(read_info)
+        _16_3[i] = {}
+        _16_3[i]['A'] = A
+        _16_3[i]['T'] = T
+        _16_3[i]['C'] = C
+        _16_3[i]['G'] = G
 
     save_graph(_0_5, f'{OUTPUT}.c{COUNT_NUCLEOTIDE_IN_START}.0.5')
     save_graph(_0_3, f'{OUTPUT}.c{COUNT_NUCLEOTIDE_IN_START}.0.3')
