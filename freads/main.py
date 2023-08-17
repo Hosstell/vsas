@@ -118,8 +118,8 @@ def get_read_info(filename):
     return _0_5, _0_3, _16_5, _16_3, _0_ls, _16_ls
 
 def save_graph(reads_info, graph_name):
-    for k in reads_info.keys():
-        reads_info[k] = {n: reads_info[k][n]/sum(reads_info[k].values())*100 for n in dict(reads_info[k]).keys()}
+    # for k in reads_info.keys():
+    #     reads_info[k] = {n: reads_info[k][n]/sum(reads_info[k].values())*100 for n in dict(reads_info[k]).keys()}
 
     res = [(int(k), v) for k, v in reads_info.items()]
     res = [x for x in res if 18 <= x[0] <= 30]
@@ -176,10 +176,17 @@ def save_static_of_lens(reads_info, output_filename):
 
 
 def to_percents(reads_info):
+    res = {}
     reads_info = reads_info.copy()
     for k in reads_info.keys():
-        reads_info[k] = {n: reads_info[k][n]/sum(reads_info[k].values())*100 for n in dict(reads_info[k]).keys()}
-    return reads_info
+        if int(sum(reads_info[k].values())) == 0:
+            continue
+
+        res[k] = {
+            n: reads_info[k][n]/sum(reads_info[k].values())*100
+            for n in dict(reads_info[k]).keys()
+        }
+    return res
 
 if __name__ == '__main__':
     filenames = FILENAMES.split(',')
@@ -213,10 +220,10 @@ if __name__ == '__main__':
             T += read_info[1].get(i, {}).get('T', 0)
             C += read_info[1].get(i, {}).get('C', 0)
             G += read_info[1].get(i, {}).get('G', 0)
-        A = A / len(read_info)
-        T = T / len(read_info)
-        C = C / len(read_info)
-        G = G / len(read_info)
+        A = A / len(filenames)
+        T = T / len(filenames)
+        C = C / len(filenames)
+        G = G / len(filenames)
         _0_5[i] = {}
         _0_5[i]['A'] = A
         _0_5[i]['T'] = T
@@ -231,10 +238,10 @@ if __name__ == '__main__':
             T += read_info[2].get(i, {}).get('T', 0)
             C += read_info[2].get(i, {}).get('C', 0)
             G += read_info[2].get(i, {}).get('G', 0)
-        A = A / len(read_info)
-        T = T / len(read_info)
-        C = C / len(read_info)
-        G = G / len(read_info)
+        A = A / len(filenames)
+        T = T / len(filenames)
+        C = C / len(filenames)
+        G = G / len(filenames)
         _0_3[i] = {}
         _0_3[i]['A'] = A
         _0_3[i]['T'] = T
@@ -249,10 +256,10 @@ if __name__ == '__main__':
             T += read_info[3].get(i, {}).get('T', 0)
             C += read_info[3].get(i, {}).get('C', 0)
             G += read_info[3].get(i, {}).get('G', 0)
-        A = A / len(read_info)
-        T = T / len(read_info)
-        C = C / len(read_info)
-        G = G / len(read_info)
+        A = A / len(filenames)
+        T = T / len(filenames)
+        C = C / len(filenames)
+        G = G / len(filenames)
         _16_5[i] = {}
         _16_5[i]['A'] = A
         _16_5[i]['T'] = T
@@ -267,10 +274,10 @@ if __name__ == '__main__':
             T += read_info[4].get(i, {}).get('T', 0)
             C += read_info[4].get(i, {}).get('C', 0)
             G += read_info[4].get(i, {}).get('G', 0)
-        A = A / len(read_info)
-        T = T / len(read_info)
-        C = C / len(read_info)
-        G = G / len(read_info)
+        A = A / len(filenames)
+        T = T / len(filenames)
+        C = C / len(filenames)
+        G = G / len(filenames)
         _16_3[i] = {}
         _16_3[i]['A'] = A
         _16_3[i]['T'] = T
