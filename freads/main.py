@@ -209,10 +209,10 @@ if __name__ == '__main__':
     for i in range(18, 31):
         A, T, C, G = 0,0,0,0
         for read_info in reads_info:
-            A += read_info[1][i].get('A', 0)
-            T += read_info[1][i].get('T', 0)
-            C += read_info[1][i].get('C', 0)
-            G += read_info[1][i].get('G', 0)
+            A += read_info[1].get(i, {}).get('A', 0)
+            T += read_info[1].get(i, {}).get('T', 0)
+            C += read_info[1].get(i, {}).get('C', 0)
+            G += read_info[1].get(i, {}).get('G', 0)
         A = A / len(read_info)
         T = T / len(read_info)
         C = C / len(read_info)
@@ -227,10 +227,10 @@ if __name__ == '__main__':
     for i in range(18, 31):
         A, T, C, G = 0,0,0,0
         for read_info in reads_info:
-            A += read_info[2][i].get('A', 0)
-            T += read_info[2][i].get('T', 0)
-            C += read_info[2][i].get('C', 0)
-            G += read_info[2][i].get('G', 0)
+            A += read_info[2].get(i, {}).get('A', 0)
+            T += read_info[2].get(i, {}).get('T', 0)
+            C += read_info[2].get(i, {}).get('C', 0)
+            G += read_info[2].get(i, {}).get('G', 0)
         A = A / len(read_info)
         T = T / len(read_info)
         C = C / len(read_info)
@@ -245,10 +245,10 @@ if __name__ == '__main__':
     for i in range(18, 31):
         A, T, C, G = 0,0,0,0
         for read_info in reads_info:
-            A += read_info[3][i].get('A', 0)
-            T += read_info[3][i].get('T', 0)
-            C += read_info[3][i].get('C', 0)
-            G += read_info[3][i].get('G', 0)
+            A += read_info[3].get(i, {}).get('A', 0)
+            T += read_info[3].get(i, {}).get('T', 0)
+            C += read_info[3].get(i, {}).get('C', 0)
+            G += read_info[3].get(i, {}).get('G', 0)
         A = A / len(read_info)
         T = T / len(read_info)
         C = C / len(read_info)
@@ -263,10 +263,10 @@ if __name__ == '__main__':
     for i in range(18, 31):
         A, T, C, G = 0,0,0,0
         for read_info in reads_info:
-            A += read_info[4][i].get('A', 0)
-            T += read_info[4][i].get('T', 0)
-            C += read_info[4][i].get('C', 0)
-            G += read_info[4][i].get('G', 0)
+            A += read_info[4].get(i, {}).get('A', 0)
+            T += read_info[4].get(i, {}).get('T', 0)
+            C += read_info[4].get(i, {}).get('C', 0)
+            G += read_info[4].get(i, {}).get('G', 0)
         A = A / len(read_info)
         T = T / len(read_info)
         C = C / len(read_info)
